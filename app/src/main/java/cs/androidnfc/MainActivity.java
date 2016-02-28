@@ -1,8 +1,13 @@
 package cs.androidnfc;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -16,10 +21,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import cs.androidnfc.adapters.DividerItemDecoration;
 import cs.androidnfc.adapters.WifiRecyclerViewAdapter;
-import jp.wasabeef.recyclerview.animators.LandingAnimator;
 import jp.wasabeef.recyclerview.animators.SlideInRightAnimator;
 
 public class MainActivity extends AppCompatActivity
@@ -35,13 +40,16 @@ public class MainActivity extends AppCompatActivity
     private ActionBarDrawerToggle mActionBarDrawerToggle;
     private NavigationView mNavigationView;
 
-    private ArrayList<String> data;
+    private WifiManager mWifiManager;
+    private WifiBroadcastReceiver mWifiBroadcastReceiver;
+
+    private ArrayList<ScanResult> mWifiScanResult;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        data = new ArrayList<String>();
-        
+        mWifiScanResult = new ArrayList<ScanResult>();
+
         setContentView(R.layout.activity_main);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -67,12 +75,30 @@ public class MainActivity extends AppCompatActivity
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         // Specify adapter
-        mAdapter = new WifiRecyclerViewAdapter(data);
+        mAdapter = new WifiRecyclerViewAdapter(mWifiScanResult);
         mRecyclerView.setAdapter(mAdapter);
 
         // Add the little grey lines between each list item
         mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST));
 
+        mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        mWifiBroadcastReceiver = new WifiBroadcastReceiver();
+        if (mWifiManager.isWifiEnabled()) {
+            registerReceiver(mWifiBroadcastReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        mWifiManager.startScan();
+        registerReceiver(mWifiBroadcastReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     @Override
@@ -134,11 +160,37 @@ public class MainActivity extends AppCompatActivity
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.fab:
-                data.add("Test add " + (data.size() + 1));
-                mAdapter.notifyItemInserted(data.size());
-                Snackbar.make(view, "Added item.", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                if (mWifiManager != null) {
+                    mWifiManager.startScan();
+                    registerReceiver(mWifiBroadcastReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+                }
+//                Snackbar.make(view, "Added item.", Snackbar.LENGTH_SHORT)
+//                        .setAction("Action", null).show();
                 break;
+        }
+    }
+
+    private class WifiBroadcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            unregisterReceiver(mWifiBroadcastReceiver);
+            List<ScanResult> wifiScanResultList = mWifiManager.getScanResults();
+
+            //Filtering the Wifi with hidden SSID
+            if (wifiScanResultList.size() > 0) {
+                int size = mWifiScanResult.size();
+                mWifiScanResult.clear();
+                mAdapter.notifyItemRangeRemoved(0, size);
+            }
+
+            for (int i = 0; i < wifiScanResultList.size(); i++) {
+                if (wifiScanResultList.get(i).SSID.length() > 0) {
+                    mWifiScanResult.add(((wifiScanResultList.get(i))));
+                    mAdapter.notifyItemInserted(mWifiScanResult.size());
+                }
+            }
+
         }
     }
 }

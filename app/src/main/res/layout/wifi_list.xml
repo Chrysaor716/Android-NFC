@@ -4,9 +4,21 @@
     android:layout_height="match_parent"
     android:padding="@dimen/generic_padding_margin">
 
+    <ProgressBar
+        android:id="@+id/wifi_level"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="@dimen/progress_bar_width"
+        android:layout_height="@dimen/progress_bar_height"
+        android:indeterminate="false"
+        android:max="100"
+        android:progress="0"
+        android:progressDrawable="@drawable/circular_progress_bar" />
+
     <TextView
         android:id="@+id/wifi_name"
+        android:paddingStart="@dimen/generic_padding_margin"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@id/wifi_level" />
 
 </RelativeLayout>

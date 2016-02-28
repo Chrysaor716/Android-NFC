@@ -3,4 +3,11 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="circular_shape_color">#CCC</color>
+    <color name="icons_color">#CCC</color>
+
+    <color name="wifi_level_start_color">#007DD6</color>
+    <color name="wifi_level_end_color">#007DD6</color>
+
 </resources>
